@@ -1,23 +1,72 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import ServiceLogo from "./ServiceLogo.jsx";
 
-const HARI  = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
-const BULAN = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
-const pad   = (n) => String(n).padStart(2, "0");
+const DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const pad = (number) => String(number).padStart(2, "0");
 
-export default function DateTimeCard() {
+function getHealth(serviceSummary) {
+  if (serviceSummary.offline > 0) {
+    return { label: "Service Offline", tone: "red" };
+  }
+
+  if (serviceSummary.warning > 0) {
+    return { label: "Degraded Performance", tone: "yellow" };
+  }
+
+  if (serviceSummary.total === 0) {
+    return { label: "Checking Systems", tone: "yellow" };
+  }
+
+  return { label: "All Systems Operational", tone: "green" };
+}
+
+export default function DateTimeCard({ sysinfo, serviceSummary }) {
   const [now, setNow] = useState(new Date());
-  useEffect(() => { const id = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(id); }, []);
+  const health = getHealth(serviceSummary);
+  const dockerRunning = sysinfo?.docker?.running ?? 0;
+  const displayIp = sysinfo?.homelabHost ?? sysinfo?.ip ?? "192.168.100.80";
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
-    <div style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border)", borderRadius: "var(--radius-md)", padding: "14px 16px" }}>
-      <div style={{ fontSize: 12, color: "var(--text-3)", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-        <i className="ti ti-clock" style={{ fontSize: 15 }} aria-hidden="true" /> Waktu Lokal
+    <div className="dashboard-card time-card enterprise-time-card">
+      <div className="card-title">
+        <i className="ti ti-clock" aria-hidden="true" />
+        Waktu Lokal
       </div>
-      <div style={{ fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 500, color: "var(--accent)", letterSpacing: 1 }}>
-        {`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`}
-      </div>
-      <div style={{ fontSize: 12, color: "var(--text-2)", marginTop: 5 }}>
-        {`${HARI[now.getDay()]}, ${now.getDate()} ${BULAN[now.getMonth()]} ${now.getFullYear()}`}
+
+      <strong>{`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`}</strong>
+      <span>{`${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`}</span>
+
+      <div className="time-divider" aria-hidden="true" />
+
+      <div className="time-system-list">
+        <div className="time-system-row">
+          <span className="system-row-icon">
+            <i className="ti ti-server" aria-hidden="true" />
+          </span>
+          <span>{sysinfo?.hostname ?? "homelab"}</span>
+        </div>
+        <div className="time-system-row">
+          <span className="system-row-icon">
+            <i className="ti ti-network" aria-hidden="true" />
+          </span>
+          <span>{displayIp}</span>
+        </div>
+        <div className="time-system-row">
+          <span className="system-row-icon brand-row-icon">
+            <ServiceLogo id="docker" />
+          </span>
+          <span>Docker: {dockerRunning} Running</span>
+        </div>
+        <div className={`time-system-row health-row health-${health.tone}`}>
+          <span className="health-dot" aria-hidden="true" />
+          <span>{health.label}</span>
+        </div>
       </div>
     </div>
   );

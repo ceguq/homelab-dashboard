@@ -1,17 +1,19 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getServices } from "../services/api.js";
 
 export function useServices(intervalMs = 10000) {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchServices = async () => {
     try {
-      const res = await fetch("/api/services");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data = await getServices();
       setServices(data);
-    } catch {
-      // Gagal — pertahankan data lama, jangan crash
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      // Pertahankan data terakhir agar dashboard tidak kosong saat polling gagal.
     } finally {
       setLoading(false);
     }
@@ -23,5 +25,5 @@ export function useServices(intervalMs = 10000) {
     return () => clearInterval(id);
   }, [intervalMs]);
 
-  return { services, loading, refetch: fetchServices };
+  return { services, loading, error, refetch: fetchServices };
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { getStats } from "../services/api.js";
 
-const MAX_POINTS = 20;
+const MAX_POINTS = 60;
 
 export function useStats(intervalMs = 2000) {
   const [stats, setStats] = useState(null);
@@ -16,9 +17,7 @@ export function useStats(intervalMs = 2000) {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch("/api/stats");
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data = await getStats();
       setStats(data);
       setError(null);
       setHistory((prev) => {

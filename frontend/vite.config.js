@@ -6,7 +6,6 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Semua request /api diteruskan ke backend — tidak perlu hardcode URL di frontend
       "/api": {
         target: "http://localhost:3001",
         changeOrigin: true,
